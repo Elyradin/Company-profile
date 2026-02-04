@@ -44,4 +44,5 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Password changed successfully.');
     }
+    
 }

@@ -20,52 +20,128 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    // register
-    public function register(Request $request)
+    // API: Register
+    public function apiRegister(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
         ]);
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'member',
-        ]);
-        return response()->json(['message' => 'User registered successfully'], 201);
+
+        try {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'member',
+            ]);
+
+            $token = $user->createToken('api-token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'User registered successfully',
+                'user' => $user,
+                'token' => $token,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Registration failed',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
     }
 
-
-    // login
-    public function login(Request $request)
+    // API: Login
+    public function apiLogin(Request $request)
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required',
+            'password' => 'required|string',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-
-            // redirect berdasarkan role
-            if (Auth::user()->role === 'admin') {
-                return redirect()->route('admin.dashboard');
-            }
-
-            return redirect()->route('profile.index');
+        if (!Auth::attempt($credentials)) {
+            return response()->json([
+                'message' => 'Invalid credentials',
+            ], 401);
         }
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
-        
+
+        $user = Auth::user();
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login successful',
+            'user' => $user,
+            'token' => $token,
+        ], 200);
     }
-    // logout
-    public function logout(Request $request)
+
+    // API: Logout
+    public function apiLogout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logged out successfully']);
+
+        return response()->json([
+            'message' => 'Logged out successfully',
+        ], 200);
+    }
+
+    // API: Update Profile
+    public function apiUpdateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+        ]);
+
+        try {
+            $user->update($validated);
+
+            return response()->json([
+                'message' => 'Profile updated successfully',
+                'user' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update profile',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    // API: Change Password
+    public function apiChangePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'old_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        // Check if old password is correct
+        if (!Hash::check($validated['old_password'], $user->password)) {
+            return response()->json([
+                'message' => 'Old password is incorrect',
+            ], 400);
+        }
+
+        try {
+            $user->update([
+                'password' => Hash::make($validated['new_password']),
+            ]);
+
+            return response()->json([
+                'message' => 'Password changed successfully',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to change password',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
     }
 
 }
