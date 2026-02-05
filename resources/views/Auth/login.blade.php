@@ -13,10 +13,16 @@
 
         <div class="row g-0">
 
-            <div class="col-md-4 d-flex flex-column justify-content-center text-center"
+            <div class="col-md-4 d-flex flex-column justify-content-center text-center text-white"
                  style="background-color: #23c984; border-radius: 8px 0 0 8px; padding: 20px;">
-                <h3 class="m-0 text-white">Welcome Back!</h3>
-                <p class="m-0 text-white">Please login to your account</p>
+                
+                <h3 class="m-0">Welcome Back!</h3>
+                <p class="m-0">Please login to your account</p>
+
+                <div class="mt-4">
+                    <p class="mb-2 small">Don't have an account?</p>
+                    <a href="/register" class="btn btn-outline-light w-75 rounded-pill">Register</a>
+                </div>
             </div>
 
             <div class="col-md-8 p-4">
@@ -56,7 +62,7 @@
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault(); // Mencegah reload halaman
 
-        // Ambil elemen berdasarkan ID (Sekarang ID-nya sudah ada di HTML)
+        // Ambil elemen berdasarkan ID
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const btn = document.getElementById('loginBtn');

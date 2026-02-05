@@ -6,15 +6,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <title>Register</title>
 </head>
-<body class="d-flex justify-content-center align-items-center"
-      style="min-height:100vh;">
+<body class="d-flex justify-content-center align-items-center" style="min-height:100vh;">
 
 <div class="container col-md-8 col-lg-6"
      style="box-shadow:0 4px 8px rgba(0,0,0,0.1); border-radius:8px; padding:0;">
 
     <div class="row g-0">
 
-        <!-- LEFT SIDE : FORM -->
         <div class="col-md-8 p-4">
 
             <h2 class="text-center mb-4">Register</h2>
@@ -54,12 +52,16 @@
 
         </div>
 
-        <!-- RIGHT SIDE : INFO -->
-        <div class="col-md-4 d-flex flex-column justify-content-center text-center"
+        <div class="col-md-4 d-flex flex-column justify-content-center text-center text-white"
              style="background-color:#23c984; border-radius:0 8px 8px 0; padding:20px;">
 
             <h3 class="m-0">Hello!</h3>
             <p class="m-0">Create your account to get started</p>
+
+            <div class="mt-4">
+                <p class="mb-2 small">Already have an account?</p>
+                <a href="/login" class="btn btn-outline-light w-75 rounded-pill">Login</a>
+            </div>
 
         </div>
 
