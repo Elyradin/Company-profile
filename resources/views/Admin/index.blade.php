@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="row mb-2">
         <div class="col-sm-6">
-            <h1 class="m-0">Users Management (API Token)</h1>
+            <h1 class="m-0">Users Management</h1>
         </div>
         <div class="col-sm-6 text-end">
             <button id="refreshBtn" class="btn btn-secondary btn-sm">

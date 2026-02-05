@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="row mb-2">
         <div class="col-sm-6">
-            <h1 class="m-0">Services Management (API Token)</h1>
+            <h1 class="m-0">Services Management</h1>
         </div>
         <div class="col-sm-6 text-end">
             <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
