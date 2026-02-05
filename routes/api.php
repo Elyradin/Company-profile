@@ -28,12 +28,6 @@ Route::middleware(['auth:sanctum', EnsureAdmin::class])->prefix('admin')->group(
     // USERS CRUD
     Route::apiResource('users', UserController::class);
 
-    // SERVICES CRUD
-    // Perhatikan: Karena ini API Resource, URL-nya otomatis:
-    // GET /api/admin/services
-    // POST /api/admin/services
-    // PUT /api/admin/services/{id}
-    // DELETE /api/admin/services/{id}
     Route::apiResource('services', ServicesController::class);
 });
 
