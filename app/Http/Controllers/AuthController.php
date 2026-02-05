@@ -144,4 +144,28 @@ class AuthController extends Controller
         }
     }
 
+    // Web Login
+    public function webLogin(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        if (!Auth::attempt($credentials)) {
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ]);
+        }
+
+        $request->session()->regenerate();
+
+        $user = Auth::user();
+        if ($user->role === 'admin') {
+            return redirect('/admin/users');
+        }
+
+        return redirect('/dashboard');
+    }
+
 }

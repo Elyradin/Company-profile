@@ -13,37 +13,29 @@
 
         <div class="row g-0">
 
-            <!-- LEFT SIDE -->
             <div class="col-md-4 d-flex flex-column justify-content-center text-center"
                  style="background-color: #23c984; border-radius: 8px 0 0 8px; padding: 20px;">
-
-                <h3 class="m-0">Welcome Back!</h3>
-                <p class="m-0">Please login to your account</p>
-
+                <h3 class="m-0 text-white">Welcome Back!</h3>
+                <p class="m-0 text-white">Please login to your account</p>
             </div>
 
-            <!-- RIGHT SIDE -->
             <div class="col-md-8 p-4">
 
-                <img src="https://example.com/logo.png"
-                     alt="Company Logo"
-                     class="d-block mx-auto mb-3"
-                     style="max-width: 150px;">
-
-                <h2 class="text-center mb-4">Login</h2>
+                <div class="text-center mb-3">
+                    <h2 class="fw-bold">Login</h2>
+                </div>
 
                 <div id="alertContainer"></div>
 
                 <form id="loginForm">
-
                     <div class="mb-3">
-                        <input type="email" id="email" name="email"
+                        <input type="email" name="email" id="email" 
                                class="form-control"
                                placeholder="Email" required>
                     </div>
 
                     <div class="mb-3">
-                        <input type="password" id="password" name="password"
+                        <input type="password" name="password" id="password"
                                class="form-control"
                                placeholder="Password" required>
                     </div>
@@ -59,78 +51,70 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault(); // Mencegah reload halaman
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const alertContainer = document.getElementById('alertContainer');
+        // Ambil elemen berdasarkan ID (Sekarang ID-nya sudah ada di HTML)
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const btn = document.getElementById('loginBtn');
+        const alertBox = document.getElementById('alertContainer');
 
-            // Show loading state
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+        const email = emailInput.value;
+        const password = passwordInput.value;
 
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password,
-                    }),
-                });
+        // 1. Reset Tampilan Tombol & Alert
+        alertBox.innerHTML = '';
+        btn.disabled = true;
+        const originalBtnText = btn.innerText;
+        btn.innerText = 'Loading...';
 
-                const data = await response.json();
+        try {
+            // 2. Kirim Request ke API
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
 
-                if (response.ok) {
-                    // Store token in localStorage
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+            const data = await response.json();
 
-                    // Show success message
-                    alertContainer.innerHTML = `
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <strong>Success!</strong> Login successful. Redirecting...
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `;
+            if (response.ok) {
+                // 3. Login Sukses: Simpan Token & Data User
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('userData', JSON.stringify(data.user));
 
-                    // Redirect after 1.5 seconds
-                    setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 1500);
+                // 4. Redirect sesuai Role
+                if (data.user.role === 'admin') {
+                    window.location.href = '/admin/dashboard';
                 } else {
-                    // Show error message
-                    alertContainer.innerHTML = `
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <strong>Error!</strong> ${data.message || 'Login failed. Please try again.'}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `;
-
-                    // Reset button
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = 'Login';
+                    window.location.href = '/dashboard';
                 }
-            } catch (error) {
-                alertContainer.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <strong>Error!</strong> ${error.message || 'An error occurred. Please try again.'}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
-
-                // Reset button
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = 'Login';
+            } else {
+                // 5. Login Gagal
+                alertBox.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        ${data.message || 'Login Gagal'}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                      </div>`;
+                btn.disabled = false;
+                btn.innerText = originalBtnText;
             }
-        });
+        } catch (error) {
+            console.error(error);
+            // 6. Error Server / Koneksi
+            alertBox.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    Terjadi kesalahan koneksi ke server.
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                  </div>`;
+            btn.disabled = false;
+            btn.innerText = originalBtnText;
+        }
+    });
     </script>
-
 </body>
 </html>

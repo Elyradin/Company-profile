@@ -1,27 +1,20 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Halaman Login (Hanya Tampilan)
+Route::get('/login', function () { return view('auth.login'); })->name('login');
+Route::get('/register', function () { return view('auth.register'); })->name('register');
 
-// Auth Routes
-Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register.form');
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login.form');
+// Halaman Dashboard & Admin (Hanya Tampilan)
+// Kita tidak pakai middleware 'auth' bawaan Laravel session, 
+// karena pengecekan login akan dilakukan oleh JavaScript di browser.
+Route::get('/dashboard', function () { return view('profile.index'); })->name('dashboard');
+Route::get('/services', function () { return view('user.services'); })->name('user.services');
 
-// Dashboard Route (for API-authenticated users)
-Route::get('/dashboard', function () {
-    return view('profile.index');
-})->name('dashboard');
+Route::get('/admin/dashboard', function () { return view('profile.index'); })->name('admin.dashboard');
+Route::get('/admin/users', function () { return view('admin.index'); })->name('admin.users');
+Route::get('/admin/services', function () { return view('admin.services'); })->name('admin.services');
 
-// Admin Dashboard Route (for session-authenticated admins)
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
-});
-
-
-
+// Default
+Route::get('/', function () { return view('welcome'); });

@@ -1,415 +1,282 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Profile Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+@extends('layouts.app')
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+@section('title', 'Dashboard & Profile')
 
-    <script>
-        // Check if user is logged in via API
-        const token = localStorage.getItem('authToken');
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        
-        if (!token && !{{ Auth::check() ? 'true' : 'false' }}) {
-            // Not authenticated, redirect to login
-            window.location.href = '/login';
-        }
-    </script>
-
-    <style>
-        body {
-            background-color: #f4f7fb;
-        }
-
-        .sidebar {
-            width: 250px;
-            background: #23c984;
-            color: #fff;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-        }
-
-        .sidebar a:hover {
-            background: rgba(255,255,255,0.15);
-            border-radius: 8px;
-        }
-
-        .sidebar.collapsed {
-            margin-left: -250px;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                position: absolute;
-                height: 100vh;
-                z-index: 1050;
-            }
-        }
-
-        .profile-img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-    </style>
-</head>
-<body>
-
-<!-- TOP NAVBAR -->
-<nav class="navbar navbar-light bg-white shadow-sm px-3">
-    <button class="btn btn-outline-secondary" id="toggleSidebar">☰</button>
-    <span class="ms-3 fw-bold">Dashboard</span>
-</nav>
-
-<div class="d-flex position-relative">
-
-    <!-- SIDEBAR -->
-    <div id="sidebar" class="sidebar p-4 vh-100">
-
-        <ul class="nav flex-column gap-2">
-            <li><a class="nav-link" href="#"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
-            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
-            </svg> Profile</a></li>
-            <li><a class="nav-link" href="#"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
-            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
-            </svg> Services</a></li>
-            <li class="nav-item">
-                <button id="logoutBtn" type="button" class="nav-link btn btn-link text-white p-0">
-                    🚪 Logout
-                </button>
-            </li>
-        </ul>
+@section('content')
+<div class="container-fluid">
+    <div class="row mb-2">
+        <div class="col-sm-6">
+            <h1 class="m-0">Dashboard & Profile</h1>
+        </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div class="flex-grow-1 p-4">
-
-        <!-- PROFILE CARD -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body d-flex gap-4 align-items-center">
-                <img src="https://via.placeholder.com/150" class="profile-img">
-                <div>
-                    <h4 class="mb-1" id="profileName">{{ Auth::user()?->name ?? '' }}</h4>
-                    <p class="mb-1 text-muted" id="profileEmail">{{ Auth::user()?->email ?? '' }}</p>
-                    <small class="text-muted" id="profileJoined">Bergabung: {{ Auth::user()?->created_at?->format('d M Y') ?? '' }}</small>
+    <div class="row mb-4">
+        
+        <div class="col-lg-6 col-6" id="card-total-users" style="display: none;">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3 id="countUsers">0</h3>
+                    <p>Total Users</p>
                 </div>
+                <div class="icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <a href="{{ route('admin.users') }}" class="small-box-footer">
+                    Manage Users <i class="fas fa-arrow-circle-right"></i>
+                </a>
             </div>
         </div>
 
-        <!-- TABS -->
-        <ul class="nav nav-tabs mb-3">
-            <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#editProfile">
-                    Edit Profile
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#changePassword">
-                    Ganti Password
-                </button>
-            </li>
-        </ul>
-
-        <div class="tab-content">
-
-            <div class="tab-pane fade show active" id="editProfile">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div id="profileAlertContainer"></div>
-                        <form id="editProfileForm">
-                            <div class="mb-3">
-                                <label class="form-label">Nama</label>
-                                <input type="text" class="form-control" id="editName" value="{{ Auth::user()?->name ?? '' }}">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" id="editEmail" value="{{ Auth::user()?->email ?? '' }}">
-                            </div>
-                            <button type="submit" id="editProfileBtn" class="btn btn-primary">Simpan</button>
-                        </form>
-                    </div>
+        <div class="col-lg-6 col-6" id="card-total-services" style="display: none;">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3 id="countServices">0</h3>
+                    <p>Available Services</p>
                 </div>
-            </div>
-
-            <div class="tab-pane fade" id="changePassword">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div id="passwordAlertContainer"></div>
-                        <form id="changePasswordForm">
-                            <div class="mb-3">
-                                <label>Password Lama</label>
-                                <input type="password" class="form-control" id="oldPassword">
-                            </div>
-                            <div class="mb-3">
-                                <label>Password Baru</label>
-                                <input type="password" class="form-control" id="newPassword">
-                            </div>
-                            <div class="mb-3">
-                                <label>Konfirmasi Password Baru</label>
-                                <input type="password" class="form-control" id="newPasswordConfirm">
-                            </div>
-                            <button type="submit" id="changePasswordBtn" class="btn btn-warning">Ganti Password</button>
-                        </form>
-                    </div>
+                <div class="icon">
+                    <i class="fas fa-concierge-bell"></i>
                 </div>
+                <a href="{{ route('admin.services') }}" class="small-box-footer">
+                    Manage Services <i class="fas fa-arrow-circle-right"></i>
+                </a>
             </div>
-
         </div>
+    </div>
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body d-flex gap-4 align-items-center">
+            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 40px;">
+                <i class="fas fa-user text-white"></i>
+            </div>
+            
+            <div>
+                <h4 class="mb-1 fw-bold" id="profileName">Loading...</h4>
+                <p class="mb-1 text-muted" id="profileEmail">...</p>
+                <small class="text-muted" id="profileJoined">...</small>
+                <br>
+                <span id="profileRoleBadge" class="badge bg-primary mt-1">...</span>
+            </div>
+        </div>
+    </div>
 
+    <div class="card card-primary card-outline card-tabs">
+        <div class="card-header p-0 pt-1 border-bottom-0">
+            <ul class="nav nav-tabs" id="custom-tabs-three-tab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="tab-edit-profile" data-bs-toggle="pill" href="#content-edit-profile" role="tab">Edit Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="tab-change-password" data-bs-toggle="pill" href="#content-change-password" role="tab">Change Password</a>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="card-body">
+            <div class="tab-content" id="custom-tabs-three-tabContent">
+                
+                <div class="tab-pane fade show active" id="content-edit-profile" role="tabpanel">
+                    <div id="profileAlert"></div>
+                    <form id="editProfileForm">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="editName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="editEmail" required>
+                        </div>
+                        <button type="submit" id="btnSaveProfile" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="content-change-password" role="tabpanel">
+                    <div id="passwordAlert"></div>
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Old Password</label>
+                            <input type="password" class="form-control" id="oldPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="newPasswordConfirm" required>
+                        </div>
+                        <button type="submit" id="btnChangePassword" class="btn btn-warning">Update Password</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
     </div>
 </div>
+@endsection
 
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Fetch user data from API
-    async function fetchUserData() {
+    // --- 1. SETUP HEADER TOKEN ---
+    function getAuthHeaders() {
         const token = localStorage.getItem('authToken');
-        
-        try {
-            const response = await fetch('/api/auth/user', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
+        if (!token) {
+            window.location.href = '/login';
+            return null;
+        }
+        return {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        };
+    }
 
-            if (response.ok) {
-                const user = await response.json();
-                
-                // Display profile data
-                document.getElementById('profileName').textContent = user.name || 'null';
-                document.getElementById('profileEmail').textContent = user.email || 'null';
-                document.getElementById('editName').value = user.name || '';
-                document.getElementById('editEmail').value = user.email || '';
-                
-                if (user.created_at) {
-                    const joinedDate = new Date(user.created_at);
-                    document.getElementById('profileJoined').textContent = 'Bergabung: ' + joinedDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-                } else {
-                    document.getElementById('profileJoined').textContent = 'Bergabung: null';
-                }
-                
-                // Update localStorage
-                localStorage.setItem('user', JSON.stringify(user));
-            } else {
-                console.error('Failed to fetch user data');
-                // Fallback to localStorage
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                if (user.name) {
-                    document.getElementById('profileName').textContent = user.name;
-                    document.getElementById('profileEmail').textContent = user.email;
-                    document.getElementById('editName').value = user.name;
-                    document.getElementById('editEmail').value = user.email;
-                    const joinedDate = new Date(user.created_at);
-                    document.getElementById('profileJoined').textContent = 'Bergabung: ' + joinedDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-                }
+    // --- 2. FETCH DATA (USER & STATS) ---
+    async function initPage() {
+        const headers = getAuthHeaders();
+        if (!headers) return;
+
+        // A. Fetch User Profile
+        try {
+            const res = await fetch('/api/auth/user', { headers: headers });
+            
+            if (res.status === 401) {
+                localStorage.removeItem('authToken');
+                window.location.href = '/login';
+                return;
             }
+
+            const user = await res.json();
+
+            // Populate Profile Data
+            document.getElementById('profileName').textContent = user.name;
+            document.getElementById('profileEmail').textContent = user.email;
+            document.getElementById('profileRoleBadge').textContent = user.role.toUpperCase();
+            
+            const date = new Date(user.created_at);
+            document.getElementById('profileJoined').textContent = 'Joined: ' + date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            document.getElementById('editName').value = user.name;
+            document.getElementById('editEmail').value = user.email;
+
+            // --- LOGIKA STATISTIK (HANYA ADMIN) ---
+            if (user.role === 'admin') {
+                // 1. Tampilkan Kartu Users
+                const cardUsers = document.getElementById('card-total-users');
+                cardUsers.style.display = 'block';
+                
+                // 2. Tampilkan Kartu Services
+                const cardServices = document.getElementById('card-total-services');
+                cardServices.style.display = 'block';
+
+                // 3. Ambil Data Statistik
+                fetchStats('/api/admin/users', 'countUsers');
+                fetchStats('/api/admin/services', 'countServices');
+            } 
+            // Jika User Biasa, kedua kartu tetap hidden (style="display:none")
+
+            // Sync LocalStorage
+            localStorage.setItem('userData', JSON.stringify(user));
+
         } catch (error) {
-            console.error('Error fetching user data:', error);
-            // Fallback to localStorage
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (user.name) {
-                document.getElementById('profileName').textContent = user.name;
-                document.getElementById('profileEmail').textContent = user.email;
-                document.getElementById('editName').value = user.name;
-                document.getElementById('editEmail').value = user.email;
-                const joinedDate = new Date(user.created_at);
-                document.getElementById('profileJoined').textContent = 'Bergabung: ' + joinedDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-            }
+            console.error('Error fetching profile:', error);
         }
     }
 
-    // Fetch user data on page load
-    document.addEventListener('DOMContentLoaded', fetchUserData);
-
-    // Logout functionality
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-        const token = localStorage.getItem('authToken');
-
+    // Helper to fetch count
+    async function fetchStats(url, elementId) {
         try {
-            const response = await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            // Clear localStorage
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-
-            // Redirect to login
-            window.location.href = '/login';
-        } catch (error) {
-            console.error('Logout error:', error);
-            // Force clear and redirect anyway
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
+            const headers = getAuthHeaders();
+            const res = await fetch(url, { headers });
+            if (res.ok) {
+                const data = await res.json();
+                const count = Array.isArray(data) ? data.length : (data.data ? data.data.length : 0);
+                document.getElementById(elementId).textContent = count;
+            }
+        } catch (e) {
+            console.error('Failed to fetch stats for ' + elementId, e);
         }
-    });
+    }
 
-    // Edit Profile functionality
+    // --- 3. HANDLE EDIT PROFILE ---
     document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-
-        const token = localStorage.getItem('authToken');
-        const name = document.getElementById('editName').value;
-        const email = document.getElementById('editEmail').value;
-        const btn = document.getElementById('editProfileBtn');
-        const alertContainer = document.getElementById('profileAlertContainer');
-
+        
+        const headers = getAuthHeaders();
+        const btn = document.getElementById('btnSaveProfile');
+        
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+        btn.innerText = 'Saving...';
+
+        const payload = {
+            name: document.getElementById('editName').value,
+            email: document.getElementById('editEmail').value
+        };
 
         try {
-            const response = await fetch('/api/auth/profile', {
+            const res = await fetch('/api/auth/profile', {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    name: name,
-                    email: email,
-                }),
+                headers: headers,
+                body: JSON.stringify(payload)
             });
 
-            const data = await response.json();
+            const data = await res.json();
 
-            if (response.ok) {
-                alertContainer.innerHTML = `
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <strong>Success!</strong> ${data.message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
-
-                // Update localStorage
-                localStorage.setItem('user', JSON.stringify(data.user));
-
-                // Update profile display
-                document.getElementById('profileName').textContent = data.user.name;
-                document.getElementById('profileEmail').textContent = data.user.email;
+            if (res.ok) {
+                Swal.fire('Success', 'Profile updated successfully!', 'success');
+                initPage(); // Refresh data
             } else {
-                alertContainer.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <strong>Error!</strong> ${data.message || 'Failed to update profile'}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
+                Swal.fire('Error', data.message || 'Update failed', 'error');
             }
-
+        } catch (err) {
+            Swal.fire('Error', 'Server error', 'error');
+        } finally {
             btn.disabled = false;
-            btn.innerHTML = 'Simpan';
-        } catch (error) {
-            alertContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <strong>Error!</strong> ${error.message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-
-            btn.disabled = false;
-            btn.innerHTML = 'Simpan';
+            btn.innerText = 'Save Changes';
         }
     });
 
-    // Change Password functionality
+    // --- 4. HANDLE CHANGE PASSWORD ---
     document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const token = localStorage.getItem('authToken');
-        const oldPassword = document.getElementById('oldPassword').value;
-        const newPassword = document.getElementById('newPassword').value;
-        const newPasswordConfirm = document.getElementById('newPasswordConfirm').value;
-        const btn = document.getElementById('changePasswordBtn');
-        const alertContainer = document.getElementById('passwordAlertContainer');
+        const headers = getAuthHeaders();
+        const btn = document.getElementById('btnChangePassword');
 
-        // Validate passwords match
-        if (newPassword !== newPasswordConfirm) {
-            alertContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <strong>Error!</strong> New passwords do not match
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-            return;
-        }
+        const oldPass = document.getElementById('oldPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+        const confirmPass = document.getElementById('newPasswordConfirm').value;
 
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+        btn.innerText = 'Processing...';
 
         try {
-            const response = await fetch('/api/auth/password', {
+            const res = await fetch('/api/auth/password', {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
+                headers: headers,
                 body: JSON.stringify({
-                    old_password: oldPassword,
-                    new_password: newPassword,
-                    new_password_confirmation: newPasswordConfirm,
-                }),
+                    old_password: oldPass,
+                    new_password: newPass,
+                    new_password_confirmation: confirmPass
+                })
             });
 
-            const data = await response.json();
+            const data = await res.json();
 
-            if (response.ok) {
-                alertContainer.innerHTML = `
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <strong>Success!</strong> ${data.message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
-
-                // Clear form
+            if (res.ok) {
+                Swal.fire('Success', 'Password changed successfully!', 'success');
                 document.getElementById('changePasswordForm').reset();
             } else {
-                alertContainer.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <strong>Error!</strong> ${data.message || 'Failed to change password'}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
+                Swal.fire('Error', data.message || 'Failed to change password', 'error');
             }
-
+        } catch (err) {
+            Swal.fire('Error', 'Server error', 'error');
+        } finally {
             btn.disabled = false;
-            btn.innerHTML = 'Ganti Password';
-        } catch (error) {
-            alertContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <strong>Error!</strong> ${error.message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-
-            btn.disabled = false;
-            btn.innerHTML = 'Ganti Password';
+            btn.innerText = 'Update Password';
         }
     });
 
-    const toggleBtn = document.getElementById('toggleSidebar');
-    const sidebar = document.getElementById('sidebar');
-
-    toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
-    });
+    // Run on load
+    document.addEventListener('DOMContentLoaded', initPage);
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+@endpush

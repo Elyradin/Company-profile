@@ -13,13 +13,8 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('description');
-            $table->string('icon')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->foreignId('created_by')
-                  ->constrained('users')
-                  ->cascadeOnDelete();
+            $table->string('name'); // <--- Pastikan ini nama kolom yang benar
+            $table->text('description'); // <--- Pastikan ini nama kolom yang benar
             $table->timestamps();
         });
     }
